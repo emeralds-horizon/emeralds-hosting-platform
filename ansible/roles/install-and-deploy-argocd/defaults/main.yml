@@ -1,0 +1,13 @@
+argocd_kubectl_namespace: "argocd"
+install_argocd: "true"
+deploy_ingress: "true"
+remote_vm_user: vmuser
+repo:
+  username: gtsakiris
+  token: 
+argocd_apps:
+  - name: data-broker
+    branch: development-fotis
+    repo: https://github.com/emeralds-horizon/data_broker.git 
+    path: manifests
+  

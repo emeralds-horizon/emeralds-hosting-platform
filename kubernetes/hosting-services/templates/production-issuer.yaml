@@ -1,0 +1,24 @@
+{{- if ne .Values.ingress.environment "localhost" }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-{{ .Values.ingress.environment }}
+spec:
+  acme:
+    # The ACME server URL
+    {{- if eq .Values.ingress.environment "prod" }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+    {{- else if eq .Values.ingress.environment "staging" }}
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    {{- end }}
+    # Email address used for ACME registration
+    email: {{ .Values.clusterIssuer.email }}
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-{{ .Values.ingress.environment }}
+    # Enable the HTTP-01 challenge provider
+    solvers:
+      - http01:
+          ingress:
+            class: {{ .Values.clusterIssuer.solvers.class }} 
+{{- end }}

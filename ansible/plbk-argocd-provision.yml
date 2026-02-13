@@ -1,0 +1,11 @@
+---
+- name: Configure ArgoCD 
+  hosts: kubeedge_masters
+  vars_files:
+    - host_vars/master1/argocd_apps.yaml
+    - host_vars/master1/repo.yaml
+  roles:
+    - role: install-and-deploy-argocd
+      vars:
+        install_argocd: false
+        deploy_ingress: true

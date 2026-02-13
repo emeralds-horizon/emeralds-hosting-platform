@@ -1,0 +1,36 @@
+---
+#TODO::Kubectl should be checked if installed. Also as it is written, it should also be in the path of the user
+
+- name: Create namespace argocd on the cluster 
+  ansible.builtin.command:
+    cmd: "kubectl create namespace {{ argocd_kubectl_namespace }}"
+
+- name: Check if argocd namespace exists
+  ansible.builtin.command:
+    cmd: "kubectl get namespaces"
+  register: kubectl_output
+
+- name: Print kubectl output
+  ansible.builtin.debug:
+    var: kubectl_output  
+
+- name: Command to create secret
+  ansible.builtin.debug:
+    msg: "kubectl create secret -n default docker-registry emeralds-repo-secret --docker-server=ghcr.io --docker-username={{ repo.username }} --docker-password={{ repo.token }}"
+
+- name: Create secret to download image to the cluster
+  ansible.builtin.command:
+    cmd: "kubectl create secret -n default docker-registry emeralds-repo-secret --docker-server=ghcr.io --docker-username={{ repo.username }} --docker-password={{ repo.token }}"
+
+- name: Deploy argocd operator on the cluster
+  ansible.builtin.command:
+    cmd: "kubectl apply -n {{ argocd_kubectl_namespace }} -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml"
+
+- name: Check if argocd services have been installed
+  ansible.builtin.command:
+    cmd: "kubectl get svc -n {{ argocd_kubectl_namespace }}" 
+  register: argocd_svc
+
+- name: Print argocd services
+  ansible.builtin.debug:
+    var: argocd_svc

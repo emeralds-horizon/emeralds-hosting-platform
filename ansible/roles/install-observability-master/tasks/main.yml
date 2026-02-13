@@ -1,0 +1,37 @@
+---
+- name: Copy observability config files from Ansible host to microk8s cluster
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubernetes/observability/microk8s-addon-observability-values.yaml"
+    dest: "/tmp/{{ remote_vm_user }}/"
+    mode: '0755'
+
+- name: Enable Observability addon for microk8s
+  ansible.builtin.command:
+    cmd: microk8s enable observability --kube-prometheus-stack-values=/tmp/{{ remote_vm_user }}/microk8s-addon-observability-values.yaml --without-tempo
+  register: result
+  ignore_errors: yes
+  changed_when: result.rc == 0
+  failed_when: result.rc != 0
+
+- name: Copy grafana service manifest files from Ansible host to microk8s cluster
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubernetes/observability/grafana-service.yaml"
+    dest: "/tmp/{{ remote_vm_user }}/"
+    mode: '0755'
+
+- name: Deploy grafana service resources with certificates
+  ansible.builtin.command:
+    cmd: "microk8s.kubectl apply -f /tmp/{{ remote_vm_user }}/grafana-service.yaml"
+  register: grafana_service_output
+  changed_when: grafana_service_output.rc == 0
+  failed_when: grafana_service_output.rc != 0
+
+- name: Print grafana service output
+  ansible.builtin.debug:
+    msg: "Grafana service deployed output: {{ grafana_service_output.stdout }}"
+
+- name: Print ingress resource output
+  ansible.builtin.debug:
+    msg: "Grafana Creds  user: admin. Password can be found on microk8s-addon-observability-values.yaml"
+
+

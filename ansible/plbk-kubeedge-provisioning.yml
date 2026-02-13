@@ -1,0 +1,62 @@
+---
+- name: Gather system information
+  hosts: kubeedge_net
+  gather_facts: true
+  tasks:
+    - name: Print hostname
+      ansible.builtin.debug:
+        msg: "Hostname: {{ ansible_hostname }}"
+
+    - name: Print IP address
+      ansible.builtin.debug:
+        msg: "IP address: {{ ansible_default_ipv4.address }}"
+
+- name: Configure Kubeedge on master nodes
+  hosts: kubeedge_masters
+  gather_facts: false
+  roles:
+    - role: config-kubeedge-master
+      vars:
+        master:
+          ip_address_exposed: "{{ masterIP }}"
+        user:
+          username: "{{ ansible_user }}"
+
+- name: Retrieved token checked from edge nodes
+  hosts: kubeedge_edges
+  tasks:
+    - name: Retrieve token
+      ansible.builtin.debug:
+        var: hostvars['master1']['output']['stdout']
+
+- name: Config Edge Nodes
+  hosts: kubeedge_edges
+  gather_facts: false
+  roles:
+    - role: config-kubeedge-edge
+      vars:
+        master:
+          ip_address_exposed: "{{ hostvars.master1.ansible_host }}"
+        token: "{{ hostvars.master1.output.stdout }}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

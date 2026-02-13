@@ -1,0 +1,61 @@
+---
+- name: Check if argocd is installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/argocd
+  register: argocd_stat
+
+- name: Download argocd CLI
+  become: true
+  ansible.builtin.command:
+    cmd: "curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64"
+  when: not argocd_stat.stat.exists
+
+- name: Install argocd CLI
+  become: true
+  ansible.builtin.command: 
+    cmd: "sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd"
+  when: not argocd_stat.stat.exists
+
+- name: retrieve argocd admin secret
+  ansible.builtin.include_tasks: get-argocd-creds.yml
+
+#TODO::Ingress should be already deployed to expose the argocd interface
+#TODO::Maybe we need to change the localhost??
+- name: Login to the argocd server
+  ansible.builtin.command:
+    cmd: "argocd login {{ master_url }} --grpc-web --insecure --username admin --password {{ argocd_admin_secret.stdout }}"
+  register: argocd_login_output
+
+- name: Print argocd login output
+  ansible.builtin.debug:
+    var: argocd_login_output.stdout
+
+#In case the repo is already installed and the cmd fails -> ignore_errors: true
+- name: Add private repo to argocd
+  ansible.builtin.command:
+    cmd: "argocd repo add {{ item.repo }} --username {{ repo.username }} --password {{ repo.token }}"
+  with_items: "{{ argocd_apps }}"
+  ignore_errors: true
+
+- name: Debug the application creation from the repo provided cmd
+  ansible.builtin.debug:
+    msg: "argocd app create {{ item.name }} --revision {{ item.branch }} --repo {{ item.repo }} --path {{ item.path }} --dest-server https://kubernetes.default.svc --dest-namespace default "
+  with_items: "{{ argocd_apps }}"
+
+- name: Create the application from the repo provided cmd
+  ansible.builtin.command:
+    cmd: "argocd app create {{ item.name }} --revision {{ item.branch }} --repo {{ item.repo }} --path {{ item.path }} --dest-server https://kubernetes.default.svc --dest-namespace default "
+  with_items: "{{ argocd_apps }}"
+  register: command_results
+
+- name: Sync application 
+  ansible.builtin.command:
+    cmd: "argocd app sync {{ item.name }}"
+  with_items: "{{ argocd_apps }}"
+  delay: 6
+  register: sync_app_output
+
+- name: Print app sync output
+  ansible.builtin.debug:
+    msg: "Output for {{ item.item.name }}: {{ item.stdout }}"
+  with_items: "{{ sync_app_output.results }}"

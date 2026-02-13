@@ -1,0 +1,39 @@
+# Default values for hosting-services.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+ingress:
+  namespace: argocd
+  enabled: true
+  className: "public"
+  environment: staging # prod, staging, localhost
+  annotations: 
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: master1-knt-platform-emeralds.northeurope.cloudapp.azure.com 
+      paths:
+        - path: /argocd(/|$)(.*)
+          pathType: Prefix
+          service:
+            name: argocd-server
+            port:
+              name: https
+        - path: /data-broker
+          pathType: Prefix
+          service:
+            name: emeralds-service
+            port:
+              number: 9080
+  tls: 
+    - secretName: argocd-secret
+      hosts:
+        - master1-knt-platform-emeralds.northeurope.cloudapp.azure.com 
+
+
+clusterIssuer:
+  production: false
+  # server: https://acme-v02.api.letsencrypt.org/directory
+  email: george.tsakiris@konnecta.io
+  solvers:
+    class: public

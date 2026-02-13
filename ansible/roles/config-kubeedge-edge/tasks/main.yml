@@ -1,0 +1,25 @@
+--- 
+# Join to kubeedge cluster
+- name: Check if Edge node is connected to master
+  become: true
+  ansible.builtin.command:
+    cmd: "keadm debug diagnose node"
+  register: check_join_output
+
+- name: Join to kubeedge cluster
+  become: true
+  ansible.builtin.command:
+    cmd: "keadm join --cloudcore-ipport={{ master.ip_address_exposed }}:10000 --token={{ token }} --kubeedge-version=v1.12.1"
+  register: output
+  when: '"cloudcore websocket connection success" not in check_join_output.stdout'
+
+- name: Get Node diagnose status
+  become: true
+  ansible.builtin.command:
+    cmd: "keadm debug diagnose node"
+  register: keadm_output
+
+- name: Verify node diagnosis
+  ansible.builtin.debug:
+    msg: "diagnose node succeed"
+  when: keadm_output.stdout | regex_search('(diagnose node succeed)')

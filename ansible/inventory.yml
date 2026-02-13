@@ -1,0 +1,30 @@
+kubeedge_masters:
+  hosts:
+    master1:
+      ansible_host: 20.82.150.140
+  vars:
+    # host_user: emeralds-user
+    masterIP: 20.82.150.140
+    ansible_user: emeralds-user
+    ansible_ssh_private_key_file: ./emeralds_user/ssh #todo::might require absolute path
+    master_url: master1-knt-platform-emeralds.northeurope.cloudapp.azure.com #TODO::Need to sync with kubernetes values.yaml
+kubeedge_edges:
+  hosts:
+    edge_node_1:
+      ansible_host:  120.82.181.154
+    edge_node_2: 
+      ansible_host: 20.82.179.142 
+  vars:
+    # host_user: emeralds-user
+    ansible_user: emeralds-user
+    # masterIP: 20.82.150.140
+    ansible_ssh_private_key_file: ./emeralds_user/ssh
+kubeedge_net:
+  children:
+    kubeedge_masters:
+    kubeedge_edges:
+  vars:
+    host_user: emeralds-user
+cloud:
+  children:
+    kubeedge_masters:

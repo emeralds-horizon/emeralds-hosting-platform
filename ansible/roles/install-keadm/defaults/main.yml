@@ -1,0 +1,3 @@
+---
+keadm_url: https://github.com/kubeedge/kubeedge/releases/download/v1.12.1/keadm-v1.12.1-linux-amd64.tar.gz
+install_location: /usr/local/bin

@@ -1,0 +1,8 @@
+# Except this file
+.terraform
+*.plan
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.pbf
+*.tfvars

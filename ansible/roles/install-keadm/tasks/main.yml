@@ -1,0 +1,38 @@
+---
+- name: download keadm
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ keadm_url }}"
+    dest: "/tmp/keadm.tar.gz"
+
+- name: Create tmp folder   
+  ansible.builtin.file:
+    path: "/tmp/keadm"
+    state: directory
+
+- name: Untar the downloaded keadm file - do not use buildin unarchive due to tarball format
+  become: true
+  ansible.builtin.command:
+    cmd: "tar xvzf /tmp/keadm.tar.gz -C /tmp/keadm --strip=2"
+  args:
+    creates: "tmp/keadm/keadm"
+
+- name: Copy the keadm to /usr/local/bin
+  become: true
+  ansible.builtin.copy:
+    remote_src: yes
+    src: "/tmp/keadm/keadm"
+    dest: "{{ install_location }}/keadm"
+    mode: 0755
+
+- name: Clean up temporary files
+  become: true
+  ansible.builtin.file:
+    path: "/tmp/keadm.tar.gz"
+    state: absent
+  
+- name: Clean up temporary files
+  become: true
+  ansible.builtin.file:
+    path: "/tmp/keadm"
+    state: absent

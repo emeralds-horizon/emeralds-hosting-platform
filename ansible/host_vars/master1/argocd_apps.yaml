@@ -1,0 +1,22 @@
+argocd_apps:
+  - repo: https://github.com/emeralds-horizon/data_broker.git 
+    name: extreme-scaling-stream-processing
+    path: manifests
+    branch: development-fotis 
+  # TODO::Just for testing as they need to run on the same Container!!!
+  - repo: https://github.com/emeralds-horizon/privacy-evaluator.git
+    name: privacy-aware-data-ingestion-preprocessing
+    path: preprocessing_component/kubernetes
+    branch: main
+  - repo: https://github.com/emeralds-horizon/privacy-evaluator.git
+    name: privacy-aware-data-ingestion
+    path: privacy_evaluation_component/kubernetes
+    branch: main
+  - repo: https://github.com/emeralds-horizon/Shared-Mobility-Data-Ingestion.git
+    name: Shared-Mobility-Data-Ingestion
+    path: kubernetes
+    branch: main
+  - repo: https://github.com/emeralds-horizon/Extreme-scale-map-matching.git
+    name: Extreme-scale-map-matching-Online-Reconstruction
+    path: Online-Reconstruction/kubernetes
+    branch: main

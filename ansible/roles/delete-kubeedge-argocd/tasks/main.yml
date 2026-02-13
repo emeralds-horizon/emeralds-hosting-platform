@@ -1,0 +1,19 @@
+---
+- name: Remove argocd operator from the cluster
+  ansible.builtin.command:
+    cmd: "kubectl delete -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml"
+
+- name: Remove argocd namespace
+  ansible.builtin.command:
+    cmd: "kubectl delete namespace argocd"
+
+- name: Remove kubeedge
+  ansible.builtin.command:
+    cmd: "kubectl delete namespace kubeedge"
+
+- name: Remove secret for private repo image
+  ansible.builtin.command:
+    cmd: "kubectl delete secret emeralds-repo-secret -n default"
+
+      # sudo lsof -i:8080 
+      # probably 8080 needs to be freed

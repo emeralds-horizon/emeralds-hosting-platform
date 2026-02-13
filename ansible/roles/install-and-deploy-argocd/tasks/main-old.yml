@@ -1,0 +1,124 @@
+---
+- name: Create namespace argocd on the cluster 
+  ansible.builtin.command:
+    cmd: "kubectl create namespace argocd"
+
+- name: Check if argocd namespace exists
+  ansible.builtin.command:
+    cmd: "kubectl get namespaces"
+  register: kubectl_output
+
+- name: Print kubectl ouput
+  ansible.builtin.debug:
+    var: kubectl_output  
+
+- name: Command to create secret
+  ansible.builtin.debug:
+    msg: "kubectl create secret -n default docker-registry emeralds-repo-secret --docker-server=ghcr.io --docker-username={{ repo.username }} --docker-password={{ repo.token }}"
+
+- name: Create secret to download image to the cluster
+  ansible.builtin.command:
+    cmd: "kubectl create secret -n default docker-registry emeralds-repo-secret --docker-server=ghcr.io --docker-username={{ repo.username }} --docker-password={{ repo.token }}"
+
+      #- name: Create config map in the argocd namespace
+      #ansible.builtin.command:
+      #cmd: "kubectl apply -f /home/emeralds-user/argocd/argocd-config-map.yaml -n argocd"
+
+- name: Deploy argocd operator on the cluster
+  ansible.builtin.command:
+    cmd: "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.0/manifests/install.yaml"
+    #cmd: "kubectl apply -n argocd -f /home/emeralds-user/argocd/argocd-install.yaml"  
+      #cmd: "kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml" 
+
+- name: Check if argocd services have been installed
+  ansible.builtin.command:
+    cmd: "kubectl get svc -n argocd" 
+  register: argocd_svc
+
+- name: Print argocd services
+  ansible.builtin.debug:
+    var: argocd_svc
+
+- name: Download argocd CLI
+  become: true
+  ansible.builtin.command: 
+    cmd: "curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64"
+
+- name: Install argocd CLI
+  become: true
+  ansible.builtin.command: 
+    cmd: "sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd"
+
+- name: Get secret token for admin  
+  ansible.builtin.shell:
+    cmd: "kubectl get secrets -n argocd argocd-initial-admin-secret -o json | jq -r .data.password | base64 --decode"
+  register: argocd_admin_secret
+
+- name: Print admin argocd kube secret
+  ansible.builtin.debug:
+    var: argocd_admin_secret 
+
+- name: Port forward of the argocd server service
+  ansible.builtin.command:
+    cmd: "kubectl port-forward services/argocd-server -n argocd 8080:443"
+  async: 3600
+  poll: 0
+  register: port_forward_output
+
+    #- name: Waiting for port_forward_output
+    #ansible.builtin.shell:
+    #cmd: "echo Waiting for port to be forwarded......"
+    #juntil: port_forward_output.changed 
+    #retries: 10
+    #delay: 5
+
+- name: Wait for port 8080 to start
+  ansible.builtin.wait_for:
+    port: 8080
+    timeout: 30
+  
+
+- name: Print cmd for login
+  ansible.builtin.debug:
+    msg: "argocd login localhost:8080 --insecure --username admin --password {{ argocd_admin_secret.stdout }}"
+
+      #- name: Pause for login
+      #ansible.builtin.pause:
+      #seconds: 4
+
+- name: Login to the argocd server
+  #delay: 4
+  ansible.builtin.command:
+    cmd: "argocd login localhost:8080 --insecure --username admin --password {{ argocd_admin_secret.stdout }}"
+  register: argocd_login_output
+
+- name: Print argocd login ouput
+  ansible.builtin.debug:
+    var: argocd_login_output.stdout
+
+- name: Add current context 
+  ansible.builtin.command:
+    cmd: "kubectl config set-context --current --namespace=argocd"
+
+- name: Add private repo to argocd
+  ansible.builtin.command:
+    cmd: "argocd repo add {{ app.repo }} --username {{ repo.username }} --password {{ repo.token }}"
+
+- name: Create the application from the repo provided cmd
+  ansible.builtin.debug:
+    msg: "argocd app create {{ app.name }} --revision {{ app.branch }} --repo {{ app.repo }} --path {{ app.path }} --dest-server https://kubernetes.default.svc --dest-namespace default "
+
+- name: Create the the application from the repo provided
+  ansible.builtin.command:
+    cmd: "argocd app create {{ app.name }} --revision {{ app.branch }} --repo {{ app.repo }} --path {{ app.path }} --dest-server https://kubernetes.default.svc --dest-namespace default "
+      #cmd: "argocd app create {{ app.app_name }} --repo {{ app.app_repo }} --path {{ app.app_name }} --dest-server https://kubernetes.default.svc --dest-namespace default "
+
+- name: Sync application 
+  ansible.builtin.command:
+    cmd: "argocd app sync {{ app.name }}"
+  delay: 6
+  register: sync_app_output
+
+- name: Print app sync output
+  ansible.builtin.debug:
+    var: sync_app_output.stdout

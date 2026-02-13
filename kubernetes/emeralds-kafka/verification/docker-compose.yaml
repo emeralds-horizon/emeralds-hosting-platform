@@ -1,0 +1,18 @@
+services:
+  kafka-producer:
+    image: docker.io/bitnami/kafka:3.9.0-debian-12-r12
+    container_name: kafka-producer
+    command: ["sleep", "infinity"]
+    environment:
+      - KAFKA_CFG_SECURITY_PROTOCOL=PLAINTEXT
+    stdin_open: true
+    tty: true
+
+  kafka-consumer:
+    image: docker.io/bitnami/kafka:3.9.0-debian-12-r12
+    container_name: kafka-consumer
+    command: ["sleep", "infinity"]
+    environment:
+      - KAFKA_CFG_SECURITY_PROTOCOL=PLAINTEXT
+    stdin_open: true
+    tty: true

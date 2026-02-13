@@ -1,0 +1,9 @@
+--- 
+- name: Get secret token for admin  
+  ansible.builtin.shell:
+    cmd: "microk8s.kubectl get secrets -n argocd argocd-initial-admin-secret -o json | jq -r .data.password | base64 --decode"
+  register: argocd_admin_secret
+
+- name: Print admin argocd kube secret
+  ansible.builtin.debug:
+    var: argocd_admin_secret 

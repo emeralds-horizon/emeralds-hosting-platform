@@ -1,0 +1,16 @@
+---
+- name: Copy manifest files from Ansible host to microk8s cluster
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../kubernetes/hosting-services/"
+    dest: "/tmp/{{ remote_vm_user }}/"
+    mode: '0755'
+
+- name: Deploy ingress resources with certificates
+  ansible.builtin.command:
+    cmd: "microk8s.helm install ingress-certs-hosting-service /tmp/{{ remote_vm_user }}"
+  register: argocd_helm_install
+
+- name: Print ingress resource output
+  ansible.builtin.debug:
+    msg: "helm Output: {{ argocd_helm_install.stdout }}"
+

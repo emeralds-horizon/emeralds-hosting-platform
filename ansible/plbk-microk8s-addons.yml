@@ -1,0 +1,19 @@
+---
+
+- name: Enanle community addons and install community and core add-ons
+  hosts: kubeedge_masters
+  roles:
+    - role: 'microk8s-community-addons'
+      vars:
+        microk8s_community_plugins:
+          argocd: true
+          portainer: false
+          dashboard-ingress: true
+          hostpath-storage: true
+
+- name: Enable Observability addon for microk8s
+  hosts: kubeedge_masters
+  gather_facts: false
+  roles:
+    - role: 'install-observability-master'
+          

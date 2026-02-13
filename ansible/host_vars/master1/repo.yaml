@@ -1,0 +1,3 @@
+repo:
+  username: "{{ lookup('env','EMERALDS_REPO_USERNAME') }}"
+  token: "{{ lookup('env','EMERALDS_REPO_TOKEN') }}"

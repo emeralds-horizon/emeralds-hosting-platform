@@ -1,0 +1,24 @@
+---
+- name: Main Playbook
+  hosts: localhost
+  become: false
+  tasks:
+    - name: Install and Configure Emeralds Hosting Services
+      ansible.builtin.debug:
+        msg: "Install and Configure Emeralds Hosting Services"
+
+- name: Install MicroK8s and Kubeedge
+  tags: install-microk8s
+  import_playbook: plbk-install-microk8s-kubeedge.yml
+
+- name: Config Kubeedge 
+  tags: install-microk8s
+  import_playbook: plbk-kubeedge-provisioning.yml
+
+- name: Add microk8s addon (ArgoCD)
+  tags: k8s_addon
+  import_playbook: plbk-microk8s-addons.yml
+
+- name: Configure ArgoCD
+  tags: argo_config
+  import_playbook: plbk-argocd-provision.yml

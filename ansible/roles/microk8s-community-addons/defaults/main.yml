@@ -1,0 +1,12 @@
+microk8s_community_plugins:
+  ambassador: false     # Ambassador is an API and Ingress controller
+  argocd: true          # Deploys Argo CD, the declarative, GitOps continuous delivery tool for Kubernetes.
+  easyhaproxy: false    # Adds EasyHAProxy for automatic ingress.
+  fluentd: false
+  istio: false          # Adds the core Istio services (not available on arm64 arch).
+  jaeger: false         # Deploy the Jaeger Operator in the “simplest” configuration
+  knative: false        # Adds the Knative middleware to your cluster
+  openfaas: false       # OpenFaaS, the popular serverless framework.
+  portainer: true
+  sosivio: false        # Predictive troubleshooting for Kubernetes
+  traefik: false        # Adds the Traefik Kubernetes Ingress controller.

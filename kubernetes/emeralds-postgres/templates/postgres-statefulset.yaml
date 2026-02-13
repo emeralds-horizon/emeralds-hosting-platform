@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      initContainers:
+        - name: fix-ssl-permissions
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Fixing SSL key permissions..."
+              mkdir -p /certs-writable
+              ls -ltr /read-only/secret.*
+              cp /read-only/secret.crt /certs-writable/server.crt
+              echo $?
+              cp /read-only/secret.key /certs-writable/server.key
+              echo $?
+              chmod 600 /certs-writable/server.*
+              chown 999:999 /certs-writable/server.*
+              echo $?
+              ls -ltr /certs-writable/server.*
+              echo "Fixing ownership on /var/lib/postgresql/data"
+              chown -R 999:999 /var/lib/postgresql/data
+              ls -ltr /var/lib/postgresql/data
+          volumeMounts:
+            - mountPath: /read-only/secret.crt
+              subPath: server.crt
+              name: postgres-ssl
+              readOnly: false
+            - mountPath: /read-only/secret.key
+              subPath: server.key
+              name: postgres-ssl
+              readOnly: false
+            - name: certs-writable
+              mountPath: /certs-writable
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: emerlads-db
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+            - mountPath: /etc/postgresql/postgresql.conf
+              subPath: postgresql.conf
+              name: postgres-config
+            - mountPath: /var/lib/postgresql/certs
+              #name: postgres-ssl
+              name: certs-writable
+            - mountPath: /etc/postgresql/pg_hba.conf
+              subPath: pg_hba.conf
+              name: postgres-pghba-config 
+          args:
+            - "docker-entrypoint.sh"
+            - "postgres"
+            - "-c"
+            - "config_file=/etc/postgresql/postgresql.conf"
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        - name: postgres-ssl
+          configMap:
+            name: postgres-ssl-file
+          # secret:
+          #   secretName: postgres-ssl-secret
+        - name: postgres-config
+          configMap:
+            name: postgres-config
+        - name: certs-writable
+          emptyDir: {}
+        - name: postgres-pghba-config
+          configMap:
+            name: postgres-pghba-config

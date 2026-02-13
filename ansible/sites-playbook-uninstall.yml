@@ -1,0 +1,11 @@
+---
+- name: Uninstall kubeedge and argocd from master nodes
+  hosts: kubeedge_masters
+  roles:
+    - delete-kubeedge-argocd
+
+- name: Uninstall kubeedge from the other nodes/edges
+  hosts: kubeedge_edges
+  roles:
+    - delete-kubeedge-edges
+

@@ -1,0 +1,9 @@
+{
+    "auths": {
+        "ghcr.io": {
+        "username": "<username",
+        "password": "<password>",
+        "auth": "<auth"
+        }
+    }
+}

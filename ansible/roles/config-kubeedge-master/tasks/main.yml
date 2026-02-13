@@ -1,0 +1,52 @@
+---
+- name: Set a local variable
+  ansible.builtin.set_fact:
+    kube_config_file: "/var/snap/microk8s/current/credentials/client.config"
+    # kube_config_file: "/home/{{ user.username }}/.kube/config"
+
+- name: Print keadm init command
+  ansible.builtin.debug:
+    msg: "keadm init --advertise-address={{ master.ip_address_exposed }} --profile version=v1.12.1 --kube-config={{ kube_config_file }}"
+
+- name: Check if kubeedge namespace exists
+  become: true
+  ansible.builtin.command:
+    cmd: "kubectl get namespaces"
+  register: kubectl_output
+
+- name: Print kubectl ouput
+  ansible.builtin.debug:
+    var: kubectl_output  
+
+- name: Init keadm
+  become: true
+  ansible.builtin.command:
+    cmd: "keadm init --advertise-address={{ master.ip_address_exposed }} --profile version=v1.12.1 --kube-config={{ kube_config_file }}"
+  when: "not (kubectl_output.stdout | regex_search('kubeedge.*Active'))"
+
+    #- name: Pause before get token
+    #ansible.builtin.pause:
+    #seconds: 5
+    #
+    #
+    #
+
+- name: Wait for token to exist
+  ansible.builtin.shell:
+    cmd: "keadm gettoken --kube-config={{ kube_config_file }}"
+  register: output
+  until: output is not failed
+  retries: 10
+  delay: 5
+  ignore_errors: yes
+
+- name: Token 
+  ansible.builtin.debug:
+    var: output.stdout
+
+- name: Get keadm token from master
+  become: true
+    #delay: 5
+  ansible.builtin.command:
+    cmd: "keadm gettoken --kube-config={{ kube_config_file }}"
+  register: output

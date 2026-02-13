@@ -1,0 +1,14 @@
+---
+- name: install argo cd 
+  ansible.builtin.include_tasks: install-argocd.yml
+  when: install_argocd
+
+- name: Print argocd login ouput
+  ansible.builtin.include_tasks: get-argocd-creds.yml
+
+- name: Ingress Controller and Cert-Manager
+  ansible.builtin.include_tasks: apply-ingress-for-argocd.yml
+  when: deploy_ingress
+    
+- name: install argo-cli and configure repositories
+  ansible.builtin.include_tasks: provision-argocd-with-repos.yml

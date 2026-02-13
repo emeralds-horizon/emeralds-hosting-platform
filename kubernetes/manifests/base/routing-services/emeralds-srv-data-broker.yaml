@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: emeralds-service
+  namespace: argocd
+spec:
+  type: ExternalName
+  externalName: emeralds-service.default.svc.cluster.local
+  ports:
+  - port: 9080
+    targetPort: 9080
+    protocol: TCP
+    name: http

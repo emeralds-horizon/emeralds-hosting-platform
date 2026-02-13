@@ -1,0 +1,61 @@
+---
+
+- name: Gather system information
+  hosts: kubeedge_net
+  gather_facts: yes
+  tasks:
+    - name: Print hostname
+      debug:
+        msg: "Hostname: {{ ansible_hostname }}"
+
+    - name: Print IP address
+      debug:
+        msg: "IP address: {{ ansible_default_ipv4.address }}"
+
+- name: Install Docker on all hosts
+  hosts: kubeedge_net
+  roles:
+    - role: install-docker
+      vars: 
+        user:
+          username: "{{ host_user }}"
+
+- name: Download and Install keadm 
+  hosts: kubeedge_net
+  roles:
+    - install-keadm
+
+- name: Install microk8s on Master nodes
+  hosts: kubeedge_masters
+  roles:
+    - role: 'ansible_role_microk8s'
+      vars:
+        microk8s_plugins:
+          dns: "1.1.1.1"
+          ingress: true
+          metrics-server: false
+          helm3: true
+          cert-manager: true
+          community: true
+          hostpath-storage: true
+        users: ["{{ ansible_user }}"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

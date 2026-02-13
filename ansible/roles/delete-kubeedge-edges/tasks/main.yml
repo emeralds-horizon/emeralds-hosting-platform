@@ -1,0 +1,12 @@
+---
+- name: Remove kubeedge directory
+  ansible.builtin.command:
+    cmd: "sudo rm -rf /etc/kubeedge/"
+
+- name: Stop mqtt container
+  ansible.builtin.command:
+    cmd: "docker stop mqtt"
+
+- name: Remove mqtt container
+  ansible.builtin.command:
+    cmd: "docker rm mqtt"

@@ -1,0 +1,34 @@
+---
+- name: Deploy nginx service  
+  ansible.builtin.command:
+    cmd: "kubectl apply -f /home/emeralds-user/nginx-controller-manifests/ingress-service.yaml -n ingress"
+
+- name: Deploy cert manager
+  ansible.builtin.command:
+    cmd: "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.11.0/cert-manager.yaml"
+
+- name: Create ClusterIssuer
+  ansible.builtin.command:
+    cmd: "kubectl apply -f /home/emeralds-user/cert-manager-manifests/issuer-prod.yaml"
+
+- name: Check if issuer was deployed on the default namespace
+  ansible.builtin.command:
+    cmd: "kubectl describe issuer -n default"
+  register: kubectl_issuer
+
+- name: Print issuer describe output
+  ansible.builtin.debug:
+    var: kubectl_issuer.stdout
+
+- name: Check that letsencrypt-prod secret is created in the default namespace 
+  ansible.builtin.cmd:
+    cmd: "kubectl describe secret letsencrypt-prod -n default"
+  register: kubectl_issuer_secret
+
+- name: Print the result
+  ansible.builtin.debug:
+    var: kubectl_issuer_secret.stdout
+
+- name: Add the ingress service containing the path pointing to the service using the newly created secret
+  ansible.builtin.command:
+    cmd: "kubectl apply -f /home/emeralds-user/cert-manager-manifests/app-ingress.yaml" 

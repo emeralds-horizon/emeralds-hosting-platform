@@ -1,0 +1,36 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress 
+  namespace: argocd 
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-stage"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+
+
+spec:
+  ingressClassName: public
+  tls:
+  - hosts:
+    - master1-knt-platform-emeralds.northeurope.cloudapp.azure.com 
+    secretName: argocd-secret
+  rules:
+  - host: master1-knt-platform-emeralds.northeurope.cloudapp.azure.com 
+    http:
+      paths:
+      - path: /data-broker
+        pathType: Prefix
+        backend:
+          service:
+            name: emeralds-service
+            port:
+              number: 9080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server 
+            port:
+              name: https
+                    #number: 443
